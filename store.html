@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#176b52">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Sổ thu chi">
+  <meta name="description" content="Sổ thu chi nội bộ cửa hàng, lưu trên thiết bị và hỗ trợ offline.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="styles.css">
+  <title>Sổ thu chi cửa hàng</title>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand-mark" aria-hidden="true">₫</div>
+    <div class="brand">
+      <h1>Sổ thu chi</h1>
+      <p>Quản lý nội bộ · Mỳ trộn & cơm trộn</p>
+    </div>
+    <button class="icon-button" id="backupQuickBtn" aria-label="Sao lưu dữ liệu" title="Sao lưu dữ liệu">⇧</button>
+  </header>
+
+  <main>
+    <section class="page active" id="page-dashboard">
+      <div class="page-heading">
+        <div><p class="eyebrow">TỔNG QUAN</p><h2>Hôm nay</h2></div>
+        <input type="date" id="dashboardDate" aria-label="Ngày cần xem">
+      </div>
+      <div class="summary-grid">
+        <article class="summary-card income"><span>Doanh thu</span><strong id="dashRevenue">0 ₫</strong><small id="dashOrders">0 suất</small></article>
+        <article class="summary-card expense"><span>Tiền thực chi</span><strong id="dashCashOut">0 ₫</strong><small>Tiền đã ghi sổ</small></article>
+        <article class="summary-card profit"><span>Lãi ước tính</span><strong id="dashProfit">0 ₫</strong><small>Trừ giá vốn & chi phí khác</small></article>
+        <article class="summary-card cash"><span>Dòng tiền ròng</span><strong id="dashNet">0 ₫</strong><small>Thu thực tế − chi thực tế</small></article>
+      </div>
+      <div class="section-title"><h3>Ghi nhanh hôm nay</h3></div>
+      <div class="quick-grid">
+        <button class="quick-action" data-go="sales"><span class="quick-icon">＋</span><span><b>Ghi doanh thu</b><small>Nhập số suất theo giá</small></span><span class="chevron">›</span></button>
+        <button class="quick-action" data-go="purchases"><span class="quick-icon orange">🛒</span><span><b>Ghi nhập hàng</b><small>Nguyên liệu, số lượng, giá</small></span><span class="chevron">›</span></button>
+        <button class="quick-action" data-go="expenses"><span class="quick-icon blue">−</span><span><b>Ghi khoản chi khác</b><small>Gas, điện, túi hộp…</small></span><span class="chevron">›</span></button>
+      </div>
+      <div class="section-title"><h3>Tóm tắt trong ngày</h3><button class="text-button" data-go="reports">Xem báo cáo</button></div>
+      <div class="list-card" id="todayActivity"><div class="empty-state">Chưa có giao dịch trong ngày.</div></div>
+      <p class="privacy-note">🔒 Dữ liệu lưu trên thiết bị này, không tự gửi lên máy chủ.</p>
+    </section>
+
+    <section class="page" id="page-sales">
+      <div class="page-heading"><div><p class="eyebrow">SỔ DOANH THU</p><h2>Ghi doanh thu</h2></div></div>
+      <form id="salesForm" class="panel">
+        <input type="hidden" id="salesId">
+        <label>Ngày bán<input type="date" id="salesDate" required></label>
+        <div class="form-section-label">Số suất theo mức giá</div>
+        <div id="priceRows" class="price-rows"></div>
+        <button type="button" class="secondary-button full" id="addPriceBtn">＋ Thêm mức giá</button>
+        <label>Ghi chú (không bắt buộc)<input id="salesNote" maxlength="160" placeholder="Ví dụ: ca sáng, đơn bổ sung…"></label>
+        <div class="calculation-strip"><span>Doanh thu bản ghi</span><strong id="salesTotal">0 ₫</strong><span id="salesCount">0 suất</span></div>
+        <div class="button-row"><button type="button" class="secondary-button" id="salesCancel" hidden>Hủy sửa</button><button class="primary-button" type="submit">Lưu doanh thu</button></div>
+      </form>
+      <div class="section-title"><h3>Bản ghi doanh thu</h3></div>
+      <div class="filter-row"><label>Ngày xem<input type="date" id="salesListDate"></label></div>
+      <div class="list-card" id="salesList"></div>
+      <p class="helper">Bạn có thể lưu nhiều bản ghi trong cùng một ngày (sáng, chiều hoặc nhập bổ sung). Báo cáo sẽ cộng tất cả bản ghi.</p>
+    </section>
+
+    <section class="page" id="page-purchases">
+      <div class="page-heading"><div><p class="eyebrow">SỔ NHẬP NGUYÊN LIỆU</p><h2>Ghi nhập hàng</h2></div></div>
+      <form id="purchaseForm" class="panel">
+        <input type="hidden" id="purchaseId">
+        <label>Ngày mua<input type="date" id="purchaseDate" required></label>
+        <label>Tên nguyên liệu / mặt hàng<input id="purchaseName" maxlength="100" required placeholder="Ví dụ: mỳ, trứng, thịt, rau…"></label>
+        <div class="two-col">
+          <label>Số lượng<input type="number" id="purchaseQty" min="0.001" step="any" required placeholder="Ví dụ: 2"></label>
+          <label>Đơn vị<input id="purchaseUnit" maxlength="24" placeholder="kg, quả, gói…" ></label>
+        </div>
+        <label>Đơn giá (đồng)<input type="number" id="purchasePrice" min="0" step="1" required placeholder="Ví dụ: 45000"></label>
+        <label>Ghi chú<input id="purchaseNote" maxlength="160" placeholder="Không bắt buộc"></label>
+        <div class="calculation-strip"><span>Thành tiền</span><strong id="purchaseTotal">0 ₫</strong></div>
+        <div class="button-row"><button type="button" class="secondary-button" id="purchaseCancel" hidden>Hủy sửa</button><button class="primary-button" type="submit">Lưu khoản nhập</button></div>
+      </form>
+      <div class="section-title"><h3>Sổ nhập hàng</h3></div>
+      <div class="filter-row"><label>Ngày xem<input type="date" id="purchaseListDate"></label></div>
+      <div class="list-card" id="purchaseList"></div>
+    </section>
+
+    <section class="page" id="page-expenses">
+      <div class="page-heading"><div><p class="eyebrow">CHI PHÍ KHÁC</p><h2>Ghi khoản chi</h2></div></div>
+      <form id="expenseForm" class="panel">
+        <input type="hidden" id="expenseId">
+        <label>Ngày chi<input type="date" id="expenseDate" required></label>
+        <label>Khoản chi<input id="expenseName" maxlength="100" required placeholder="Ví dụ: gas, điện, túi hộp, tiền ship…"></label>
+        <label>Số tiền (đồng)<input type="number" id="expenseAmount" min="0" step="1" required placeholder="Ví dụ: 50000"></label>
+        <label>Ghi chú<input id="expenseNote" maxlength="160" placeholder="Không bắt buộc"></label>
+        <div class="button-row"><button type="button" class="secondary-button" id="expenseCancel" hidden>Hủy sửa</button><button class="primary-button" type="submit">Lưu khoản chi</button></div>
+      </form>
+      <div class="section-title"><h3>Các khoản chi</h3></div>
+      <div class="filter-row"><label>Ngày xem<input type="date" id="expenseListDate"></label></div>
+      <div class="list-card" id="expenseList"></div>
+    </section>
+
+    <section class="page" id="page-reports">
+      <div class="page-heading"><div><p class="eyebrow">BÁO CÁO</p><h2>Thu chi & lợi nhuận</h2></div></div>
+      <div class="panel">
+        <label>Chọn tháng<input type="month" id="reportMonth"></label>
+        <div class="summary-grid report-summary">
+          <article class="summary-card income"><span>Doanh thu</span><strong id="reportRevenue">0 ₫</strong></article>
+          <article class="summary-card expense"><span>Tiền thực chi</span><strong id="reportCashOut">0 ₫</strong></article>
+          <article class="summary-card profit"><span>Lãi ước tính</span><strong id="reportProfit">0 ₫</strong></article>
+          <article class="summary-card cash"><span>Dòng tiền ròng</span><strong id="reportNet">0 ₫</strong></article>
+        </div>
+        <div class="report-note"><b>Phân biệt hai chỉ số</b><br>• Dòng tiền ròng = doanh thu − tiền mua hàng − chi phí khác.<br>• Lãi ước tính = doanh thu − (số suất × giá vốn/suất) − chi phí khác.<br>Tiền mua nguyên liệu được tính vào dòng tiền, không tự động trừ toàn bộ khỏi lãi ước tính để tránh tính trùng giá vốn.</div>
+      </div>
+      <div class="section-title"><h3>Thiết lập giá vốn mỗi suất</h3></div>
+      <form id="settingsForm" class="panel">
+        <p class="helper no-top">Nhập giá vốn ước tính trung bình cho một suất bán (nguyên liệu trực tiếp). Có thể đặt một mức chung cho tất cả giá bán.</p>
+        <label>Giá vốn nguyên liệu / suất (đồng)<input type="number" id="costPerServing" min="0" step="1" required></label>
+        <button class="primary-button full" type="submit">Lưu thiết lập</button>
+      </form>
+      <div class="section-title"><h3>Chi tiết từng ngày</h3><button class="text-button" id="exportCsvBtn">Xuất CSV</button></div>
+      <div class="table-wrap"><table><thead><tr><th>Ngày</th><th>Doanh thu</th><th>Tiền chi</th><th>Lãi ước tính</th></tr></thead><tbody id="reportTable"></tbody></table></div>
+    </section>
+
+    <section class="page" id="page-data">
+      <div class="page-heading"><div><p class="eyebrow">DỮ LIỆU CÁ NHÂN</p><h2>Sao lưu & cài đặt</h2></div></div>
+      <div class="panel">
+        <div class="settings-item"><div><b>Sao lưu toàn bộ dữ liệu</b><p>Tải về tệp JSON để cất giữ an toàn.</p></div><button class="primary-button" id="backupBtn">Sao lưu</button></div>
+        <div class="settings-item"><div><b>Phục hồi từ tệp JSON</b><p>Dữ liệu hiện có sẽ được thay thế bằng bản sao lưu đã chọn.</p></div><button class="secondary-button" id="restoreBtn">Chọn tệp</button><input type="file" id="restoreFile" accept=".json,application/json" hidden></div>
+        <div class="settings-item"><div><b>Xuất bảng CSV</b><p>Xuất các giao dịch để mở bằng Excel hoặc Numbers.</p></div><button class="secondary-button" id="allCsvBtn">Xuất CSV</button></div>
+        <div class="settings-item danger-zone"><div><b>Xóa toàn bộ dữ liệu</b><p>Không thể hoàn tác. Hãy sao lưu trước.</p></div><button class="danger-button" id="clearDataBtn">Xóa dữ liệu</button></div>
+      </div>
+      <div class="panel about-panel">
+        <h3>Về ứng dụng</h3>
+        <p>Ứng dụng ghi sổ nội bộ, không có giỏ hàng, đặt món hay thanh toán cho khách. Dữ liệu được lưu trong bộ nhớ trình duyệt trên thiết bị này.</p>
+        <p><b>Lưu ý:</b> Khi dùng trên iPhone, hãy sao lưu JSON định kỳ. Xóa dữ liệu Safari hoặc gỡ/đặt lại dữ liệu website có thể làm mất dữ liệu. Bản sao lưu có thể chứa thông tin tài chính cá nhân, hãy cất giữ riêng tư.</p>
+        <p id="storageStatus" class="helper"></p>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Điều hướng chính">
+    <button class="nav-item active" data-page="dashboard"><span>⌂</span><small>Tổng quan</small></button>
+    <button class="nav-item" data-page="sales"><span>＋</span><small>Doanh thu</small></button>
+    <button class="nav-item" data-page="purchases"><span>🛒</span><small>Nhập hàng</small></button>
+    <button class="nav-item" data-page="reports"><span>▥</span><small>Báo cáo</small></button>
+    <button class="nav-item" data-page="data"><span>⚙</span><small>Dữ liệu</small></button>
+  </nav>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
